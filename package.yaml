@@ -1,0 +1,57 @@
+name: ebml
+version: 0.0.1.0
+synopsis: EBML parser
+description: EBML parser.
+author: Tristan Cacqueray
+maintainer: tdecacqu@redhat.com
+github: TristanCacqueray/haskell-ebml
+language: GHC2021
+category: Codec
+extra-source-files:
+  - CHANGELOG.md
+
+ghc-options:
+  - -Wall
+  - -fwarn-incomplete-uni-patterns
+  - -Wno-partial-type-signatures
+  - -fwrite-ide-info
+  - -hiedir=.hie
+  - -Wno-missing-methods
+
+default-extensions:
+  - OverloadedStrings
+  - ImportQualifiedPost
+  - LambdaCase
+  - DuplicateRecordFields
+  - OverloadedRecordDot
+  - BlockArguments
+  - StrictData
+  - MultiWayIf
+
+dependencies:
+  - base < 5
+  - binary
+  - bytestring
+  - containers
+  - text
+
+library:
+  source-dirs: src
+
+executable:
+  main: Main.hs
+  source-dirs: app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-T
+  dependencies:
+    - ebml
+
+tests:
+  spec:
+    main: Spec.hs
+    ghc-options: -threaded -rtsopts -with-rtsopts=-T
+    source-dirs: test
+    dependencies:
+      - ebml
+      - tasty
+      - hspec-expectations
+      - tasty-hunit

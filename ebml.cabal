@@ -1,0 +1,103 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ebml
+version:        0.0.1.0
+synopsis:       EBML parser
+description:    EBML parser.
+category:       Codec
+homepage:       https://github.com/TristanCacqueray/haskell-ebml#readme
+bug-reports:    https://github.com/TristanCacqueray/haskell-ebml/issues
+author:         Tristan Cacqueray
+maintainer:     tdecacqu@redhat.com
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/TristanCacqueray/haskell-ebml
+
+library
+  exposed-modules:
+      Codec.EBML
+  other-modules:
+      Paths_ebml
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+      ImportQualifiedPost
+      LambdaCase
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BlockArguments
+      StrictData
+      MultiWayIf
+  ghc-options: -Wall -fwarn-incomplete-uni-patterns -Wno-partial-type-signatures -fwrite-ide-info -hiedir=.hie -Wno-missing-methods
+  build-depends:
+      base <5
+    , binary
+    , bytestring
+    , containers
+    , text
+  default-language: GHC2021
+
+executable ebml
+  main-is: Main.hs
+  other-modules:
+      Paths_ebml
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+      ImportQualifiedPost
+      LambdaCase
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BlockArguments
+      StrictData
+      MultiWayIf
+  ghc-options: -Wall -fwarn-incomplete-uni-patterns -Wno-partial-type-signatures -fwrite-ide-info -hiedir=.hie -Wno-missing-methods -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+      base <5
+    , binary
+    , bytestring
+    , containers
+    , ebml
+    , text
+  default-language: GHC2021
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_ebml
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+      ImportQualifiedPost
+      LambdaCase
+      DuplicateRecordFields
+      OverloadedRecordDot
+      BlockArguments
+      StrictData
+      MultiWayIf
+  ghc-options: -Wall -fwarn-incomplete-uni-patterns -Wno-partial-type-signatures -fwrite-ide-info -hiedir=.hie -Wno-missing-methods -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+      base <5
+    , binary
+    , bytestring
+    , containers
+    , ebml
+    , hspec-expectations
+    , tasty
+    , tasty-hunit
+    , text
+  default-language: GHC2021
