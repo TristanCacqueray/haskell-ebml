@@ -3,23 +3,24 @@ module Codec.EBML.Pretty where
 import Data.ByteString qualified as BS
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Text.Encoding (decodeUtf8With)
-import Data.Text.Encoding.Error (lenientDecode)
 import Numeric.Natural
 
 import Codec.EBML.Element
+import Codec.EBML.Schema
 
-prettyEBMLDocument :: EBMLDocument -> Text
-prettyEBMLDocument (EBMLDocument xs) = Text.unlines $ map (prettyElement 0) xs
+prettyEBMLDocument :: [EBMLSchema] -> EBMLDocument -> Text
+prettyEBMLDocument schemas (EBMLDocument xs) = mconcat $ map (prettyElement (compileSchemas schemas) 0) xs
 
-prettyElement :: Natural -> EBMLElement -> Text
-prettyElement indent elt = indentTxt <> eltIDTxt <> ": " <> eltValueTxt
+prettyElement :: EBMLSchemas -> Natural -> EBMLElement -> Text
+prettyElement schemas indent elt = indentTxt <> eltIDTxt <> ": " <> eltValueTxt
   where
     indentTxt = Text.replicate (fromIntegral indent) " "
-    eltIDTxt = Text.pack (show elt.header.eid)
+    eltIDTxt = case lookupSchema elt.header.eid schemas of
+        Just schema -> schema.name
+        Nothing -> Text.pack (show elt.header.eid)
     eltValueTxt = case elt.value of
-        EBMLRoot xs -> "\n" <> mconcat (map (prettyElement (indent + 2)) xs)
-        EBMLText txt -> txt
-        EBMLBinary bs -> "[raw:" <> Text.pack (show $ BS.length bs) <> " " <> bsTxt bs <> "]"
-        _ -> "value"
-    bsTxt bs = Text.replace "\n" "\\n" $ decodeUtf8With lenientDecode (BS.take 64 bs)
+        EBMLRoot xs -> "\n" <> mconcat (map (prettyElement schemas (indent + 2)) xs)
+        EBMLText txt -> txt <> "\n"
+        EBMLBinary bs -> "[raw:" <> Text.pack (show $ BS.length bs) <> " " <> bsTxt bs <> "]\n"
+        _ -> "value\n"
+    bsTxt = Text.pack . show . BS.take 32

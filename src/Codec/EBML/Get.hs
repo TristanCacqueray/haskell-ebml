@@ -1,7 +1,6 @@
 module Codec.EBML.Get where
 
 import Data.Binary.Get (Get, bytesRead, getByteString, isEmpty)
-import Data.Map.Strict qualified as Map
 
 import Codec.EBML.Element
 import Codec.EBML.Schema
@@ -10,7 +9,7 @@ import Data.Text.Encoding (decodeUtf8)
 getElement :: EBMLSchemas -> Get EBMLElement
 getElement schemas = do
     elth <- getElementHeader
-    val <- case Map.lookup elth.eid schemas.getSchemas of
+    val <- case lookupSchema elth.eid schemas of
         Nothing -> getBinary elth
         Just schema -> schema.decode schemas elth
     pure $ EBMLElement elth val

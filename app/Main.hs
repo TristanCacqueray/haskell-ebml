@@ -8,6 +8,7 @@ main :: IO ()
 main =
     getArgs >>= \case
         [fp] -> do
-            ebml <- EBML.decodeFile EBML.webmSchemas fp
-            Data.Text.IO.putStrLn (EBML.prettyEBMLDocument ebml)
+            let schemas = EBML.webmSchemas
+            ebml <- EBML.decodeFile schemas fp
+            Data.Text.IO.putStrLn (EBML.prettyEBMLDocument schemas ebml)
         _ -> error "usage: haskell-ebml FILE"

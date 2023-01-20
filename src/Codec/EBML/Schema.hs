@@ -13,9 +13,12 @@ data EBMLSchema = EBMLSchema
     , decode :: EBMLSchemas -> EBMLElementHeader -> Get EBMLValue
     }
 
-newtype EBMLSchemas = EBMLSchemas {getSchemas :: Map EBMLID EBMLSchema}
+newtype EBMLSchemas = EBMLSchemas (Map EBMLID EBMLSchema)
 
 compileSchemas :: [EBMLSchema] -> EBMLSchemas
 compileSchemas = EBMLSchemas . Map.fromList . map toKV
   where
     toKV schema = (schema.eid, schema)
+
+lookupSchema :: EBMLID -> EBMLSchemas -> Maybe EBMLSchema
+lookupSchema eid (EBMLSchemas schemas) = Map.lookup eid schemas
