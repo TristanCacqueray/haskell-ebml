@@ -54,9 +54,11 @@ import Codec.EBML.Header
 import Codec.EBML.Pretty
 import Codec.EBML.Schema
 
+-- | The webm document schemas.
 webmSchemas :: [EBMLSchema]
 webmSchemas = schemaHeader
 
+-- | Lazy decode a 'EBMLDocument'.
 decodeEBMLDocument :: [EBMLSchema] -> LBS.ByteString -> Either String EBMLDocument
 decodeEBMLDocument schemas lbs = case runGetOrFail (getDocument (compileSchemas schemas)) lbs of
     Left (_, _, err) -> Left err

@@ -8,24 +8,30 @@ import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Word (Word32, Word64)
 
+-- | EBML document structure, including the Header and Body Root.
 newtype EBMLDocument = EBMLDocument [EBMLElement]
 
+-- | EBML element id.
 newtype EBMLID = EBMLID Word32
     deriving (Show)
     deriving newtype (Num, Eq, Ord)
 
+-- | EBML element header.
 data EBMLElementHeader = EBMLElementHeader
     { eid :: EBMLID
     , size :: Maybe Word64
+    -- ^ size is Nothing for unknown-sized element.
     }
     deriving (Show)
 
+-- | EBML element.
 data EBMLElement = EBMLElement
     { header :: EBMLElementHeader
     , value :: EBMLValue
     }
     deriving (Show)
 
+-- | EBML element value.
 data EBMLValue
     = EBMLRoot [EBMLElement]
     | EBMLSignedInteger Int64
@@ -55,6 +61,8 @@ getMaybeDataSize :: Get (Maybe Word64)
 getMaybeDataSize = do
     sz <- getDataSize
     pure $
+        -- TODO: better check for unknown-sized for different VINT_DATA size.
+        -- though, it seems like this is the common value.
         if sz == 0xFFFFFFFFFFFFFF
             then Nothing
             else Just sz

@@ -8,6 +8,7 @@ import Numeric.Natural
 import Codec.EBML.Element
 import Codec.EBML.Schema
 
+-- | Pretty-print a 'EBMLDocument'.
 prettyEBMLDocument :: [EBMLSchema] -> EBMLDocument -> Text
 prettyEBMLDocument schemas (EBMLDocument xs) = mconcat $ map (prettyElement (compileSchemas schemas) 0) xs
 

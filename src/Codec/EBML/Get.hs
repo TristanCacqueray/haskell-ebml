@@ -53,8 +53,12 @@ getRoot schemas elth = case elth.size of
 getUntil :: EBMLSchemas -> EBMLID -> Get [EBMLElement]
 getUntil schemas eid = go
   where
-    getNew :: Get (Maybe EBMLElement)
-    getNew = do
+    getChild :: Get (Maybe EBMLElement)
+    getChild = do
+        -- This is not exactly correct. The rfc-8794 spec (chapter 6.2) says we should decode until
+        -- any valid parent or global element. Because the EBMLSchema doesn't yet contain this information,
+        -- and because in practice such unknown-sized element are segment/cluster, we simply decode until
+        -- we find a matching element.
         elth <- getElementHeader
         if elth.eid == eid
             then pure Nothing
@@ -64,12 +68,14 @@ getUntil schemas eid = go
         empty <- isEmpty
         if empty
             then pure []
-            else
-                lookAheadM getNew >>= \case
-                    Just elt -> do
-                        elts <- go
-                        pure (elt : elts)
-                    Nothing -> pure []
+            else goGet
+
+    goGet =
+        lookAheadM getChild >>= \case
+            Just elt -> do
+                elts <- go
+                pure (elt : elts)
+            Nothing -> pure []
 
 getRootFixed :: EBMLSchemas -> Word64 -> Get EBMLValue
 getRootFixed schemas sz = do
