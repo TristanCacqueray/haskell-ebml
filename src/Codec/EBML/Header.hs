@@ -12,7 +12,7 @@ schemaHeader =
     [ EBMLSchema "EBML" 0x1A45DFA3 getRoot
     , EBMLSchema "DocType" 0x4282 (const getText)
     , EBMLSchema "Segment" 0x18538067 getRoot
-    , EBMLSchema "Cluster" 0x1F43B675 (const getBinary)
+    , EBMLSchema "Cluster" 0x1F43B675 getRoot
     ]
         <> map fromUints uints
 

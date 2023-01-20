@@ -16,7 +16,7 @@ newtype EBMLID = EBMLID Word32
 
 data EBMLElementHeader = EBMLElementHeader
     { eid :: EBMLID
-    , size :: Word64
+    , size :: Maybe Word64
     }
     deriving (Show)
 
@@ -37,7 +37,7 @@ data EBMLValue
     deriving (Show)
 
 getElementHeader :: Get EBMLElementHeader
-getElementHeader = EBMLElementHeader <$> getElementID <*> getDataSize
+getElementHeader = EBMLElementHeader <$> getElementID <*> getMaybeDataSize
 
 getElementID :: Get EBMLID
 getElementID =
@@ -50,6 +50,14 @@ getElementID =
                 | b1 `testBit` 5 -> getVar 2 w1
                 | b1 `testBit` 4 -> getVar 3 w1
                 | otherwise -> fail ("Invalid width: " <> show b1)
+
+getMaybeDataSize :: Get (Maybe Word64)
+getMaybeDataSize = do
+    sz <- getDataSize
+    pure $
+        if sz == 0xFFFFFFFFFFFFFF
+            then Nothing
+            else Just sz
 
 getDataSize :: Get Word64
 getDataSize = do
