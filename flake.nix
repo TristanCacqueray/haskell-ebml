@@ -1,5 +1,5 @@
 {
-  nixConfig.bash-prompt = "[nix(butler)] ";
+  nixConfig.bash-prompt = "[nix(ebml)] ";
   inputs = {
     hspkgs.url =
       "github:podenv/hspkgs/ba5d181089900f376f765e4a6889bd30c4f96993";

@@ -1,6 +1,5 @@
 module Main (main) where
 
-import Codec.EBML.Element (getDataSize)
 import Data.Binary.Get (runGet)
 import Data.Binary.Put (putWord8, runPut)
 import Data.ByteString.Char8 qualified as BS
@@ -8,9 +7,11 @@ import Data.Char (digitToInt)
 import Data.Foldable (traverse_)
 import Data.List (foldl')
 import Data.List.Split (chunksOf)
-import Data.Word (Word64, Word8)
+import Data.Word (Word8)
 import Test.Tasty
 import Test.Tasty.Golden
+
+import Codec.EBML qualified as EBML
 
 main :: IO ()
 main = defaultMain $ testGroup "Codec.EBML" [unitTests]
@@ -36,7 +37,7 @@ testVarInts str = BS.pack $ padStr <> " => " <> padVal
   where
     padStr = replicate (42 - length str) ' ' <> str
     padVal = replicate (8 - length val) ' ' <> val
-    val = show $ runGet getDataSize bs
+    val = show $ runGet EBML.getDataSize bs
     bs = runPut $ traverse_ (putWord8 . readOctet) $ chunksOf 8 $ filter (/= ' ') str
 
 readOctet :: String -> Word8

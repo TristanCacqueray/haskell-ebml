@@ -8,6 +8,8 @@ import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Word (Word32, Word64)
 
+newtype EBMLDocument = EBMLDocument [EBMLElement]
+
 newtype EBMLID = EBMLID Word32
     deriving (Show)
     deriving newtype (Num, Eq, Ord)

@@ -1,7 +1,10 @@
 name: ebml
 version: 0.0.1.0
-synopsis: EBML parser
-description: EBML parser.
+synopsis: A pure EBML parser
+description: |
+  Decode Extensible Binary Meta Language (EBML) format.
+
+  Use this library to parse and split webm file.
 author: Tristan Cacqueray
 maintainer: tdecacqu@redhat.com
 github: TristanCacqueray/haskell-ebml
@@ -31,6 +34,7 @@ default-extensions:
 
 library:
   source-dirs: src
+  exposed-modules: Codec.EBML
   dependencies:
     - base < 5
     - binary

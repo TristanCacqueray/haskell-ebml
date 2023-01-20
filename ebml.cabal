@@ -6,8 +6,10 @@ cabal-version: 1.12
 
 name:           ebml
 version:        0.0.1.0
-synopsis:       EBML parser
-description:    EBML parser.
+synopsis:       A pure EBML parser
+description:    Decode Extensible Binary Meta Language (EBML) format.
+                .
+                Use this library to parse and split webm file.
 category:       Codec
 homepage:       https://github.com/TristanCacqueray/haskell-ebml#readme
 bug-reports:    https://github.com/TristanCacqueray/haskell-ebml/issues
@@ -26,12 +28,12 @@ source-repository head
 library
   exposed-modules:
       Codec.EBML
+  other-modules:
       Codec.EBML.Element
       Codec.EBML.Get
       Codec.EBML.Header
       Codec.EBML.Pretty
       Codec.EBML.Schema
-  other-modules:
       Paths_ebml
   hs-source-dirs:
       src

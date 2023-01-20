@@ -9,11 +9,11 @@ import Numeric.Natural
 
 import Codec.EBML.Element
 
-prettyElements :: [EBMLElement] -> Text
-prettyElements = mconcat . map (prettyElement 0)
+prettyEBMLDocument :: EBMLDocument -> Text
+prettyEBMLDocument (EBMLDocument xs) = Text.unlines $ map (prettyElement 0) xs
 
 prettyElement :: Natural -> EBMLElement -> Text
-prettyElement indent elt = indentTxt <> eltIDTxt <> ": " <> eltValueTxt <> "\n"
+prettyElement indent elt = indentTxt <> eltIDTxt <> ": " <> eltValueTxt
   where
     indentTxt = Text.replicate (fromIntegral indent) " "
     eltIDTxt = Text.pack (show elt.header.eid)

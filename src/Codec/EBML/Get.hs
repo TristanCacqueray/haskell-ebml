@@ -10,20 +10,22 @@ import Data.Text.Encoding (decodeUtf8)
 getElement :: EBMLSchemas -> Get EBMLElement
 getElement schemas = do
     elth <- getElementHeader
-    val <- case Map.lookup elth.eid schemas of
+    val <- case Map.lookup elth.eid schemas.getSchemas of
         Nothing -> getBinary elth
         Just schema -> schema.decode schemas elth
     pure $ EBMLElement elth val
 
-getElements :: EBMLSchemas -> Get [EBMLElement]
-getElements schemas = do
-    empty <- isEmpty
-    if empty
-        then pure []
-        else do
-            elt <- getElement schemas
-            elts <- getElements schemas
-            pure (elt : elts)
+getDocument :: EBMLSchemas -> Get EBMLDocument
+getDocument schemas = EBMLDocument <$> go
+  where
+    go = do
+        empty <- isEmpty
+        if empty
+            then pure []
+            else do
+                elt <- getElement schemas
+                elts <- go
+                pure (elt : elts)
 
 getBinary :: EBMLElementHeader -> Get EBMLValue
 getBinary elth = EBMLBinary <$> getByteString (fromIntegral elth.size)

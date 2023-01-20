@@ -9,5 +9,5 @@ main =
     getArgs >>= \case
         [fp] -> do
             ebml <- EBML.decodeFile EBML.webmSchemas fp
-            Data.Text.IO.putStrLn (EBML.prettyElements ebml)
+            Data.Text.IO.putStrLn (EBML.prettyEBMLDocument ebml)
         _ -> error "usage: haskell-ebml FILE"
