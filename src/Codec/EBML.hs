@@ -21,6 +21,9 @@ module Codec.EBML (
     -- * EBML decoder
     decodeEBMLDocument,
 
+    -- * EBML stream reader
+    module Codec.EBML.Stream,
+
     -- * EBML data types
     EBMLDocument (..),
     EBMLElement (..),
@@ -53,6 +56,7 @@ import Codec.EBML.Get
 import Codec.EBML.Header
 import Codec.EBML.Pretty
 import Codec.EBML.Schema
+import Codec.EBML.Stream
 
 -- | The webm document schemas.
 webmSchemas :: [EBMLSchema]

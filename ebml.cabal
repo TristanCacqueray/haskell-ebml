@@ -34,6 +34,7 @@ library
       Codec.EBML.Header
       Codec.EBML.Pretty
       Codec.EBML.Schema
+      Codec.EBML.Stream
       Paths_ebml
   hs-source-dirs:
       src
@@ -75,6 +76,7 @@ executable haskell-ebml
   ghc-options: -Wall -fwarn-incomplete-uni-patterns -Wno-partial-type-signatures -fwrite-ide-info -hiedir=.hie -Wno-missing-methods -threaded -rtsopts -with-rtsopts=-T
   build-depends:
       base <5
+    , bytestring
     , ebml
     , text
   default-language: GHC2021
