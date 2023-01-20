@@ -29,22 +29,24 @@ default-extensions:
   - StrictData
   - MultiWayIf
 
-dependencies:
-  - base < 5
-  - binary
-  - bytestring
-  - containers
-  - text
-
 library:
   source-dirs: src
-
-executable:
-  main: Main.hs
-  source-dirs: app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-T
   dependencies:
-    - ebml
+    - base < 5
+    - binary
+    - bytestring
+    - containers
+    - text
+
+executables:
+  haskell-ebml:
+    main: Main.hs
+    source-dirs: app
+    ghc-options: -threaded -rtsopts -with-rtsopts=-T
+    dependencies:
+      - base < 5
+      - ebml
+      - text
 
 tests:
   spec:
@@ -52,7 +54,10 @@ tests:
     ghc-options: -threaded -rtsopts -with-rtsopts=-T
     source-dirs: test
     dependencies:
+      - base < 5
       - ebml
       - tasty
-      - hspec-expectations
-      - tasty-hunit
+      - tasty-golden
+      - bytestring
+      - binary
+      - split

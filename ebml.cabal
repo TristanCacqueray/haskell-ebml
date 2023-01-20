@@ -54,7 +54,7 @@ library
     , text
   default-language: GHC2021
 
-executable ebml
+executable haskell-ebml
   main-is: Main.hs
   other-modules:
       Paths_ebml
@@ -73,9 +73,6 @@ executable ebml
   ghc-options: -Wall -fwarn-incomplete-uni-patterns -Wno-partial-type-signatures -fwrite-ide-info -hiedir=.hie -Wno-missing-methods -threaded -rtsopts -with-rtsopts=-T
   build-depends:
       base <5
-    , binary
-    , bytestring
-    , containers
     , ebml
     , text
   default-language: GHC2021
@@ -102,10 +99,8 @@ test-suite spec
       base <5
     , binary
     , bytestring
-    , containers
     , ebml
-    , hspec-expectations
+    , split
     , tasty
-    , tasty-hunit
-    , text
+    , tasty-golden
   default-language: GHC2021

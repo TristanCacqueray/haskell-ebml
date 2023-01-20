@@ -5,10 +5,10 @@ log() {
 }
 
 log "Building"
-cabal build -O0 --enable-tests --ghc-option=-Werror
+cabal build -O0 --enable-tests --ghc-option=-Werror --ghc-option=-Wunused-packages
 
 log "Testing"
-cabal test -O0 --test-show-details=direct
+cabal test -O0 --test-show-details=direct --test-option=--accept
 cabal check
 
 log "Doctests"
