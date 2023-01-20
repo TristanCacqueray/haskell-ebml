@@ -10,7 +10,7 @@ Work in progress, only binary elements are currently supported.
 - [ ] Decode data type (e.g. int, text, ...)
 - [ ] Schemas definition
 - [ ] Handle edge case (e.g. streaming with unknown size)
-- [ ] Pretty printer
+- [x] Pretty printer
 - [ ] Incremental parser
 - [ ] Property tests
 - [ ] Schemas validation

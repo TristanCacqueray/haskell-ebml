@@ -6,7 +6,6 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 
 import Codec.EBML.Element
-import Codec.EBML.Value
 
 data EBMLSchema = EBMLSchema
     { name :: Text

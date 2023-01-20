@@ -5,7 +5,7 @@ import Data.Map.Strict qualified as Map
 
 import Codec.EBML.Element
 import Codec.EBML.Schema
-import Codec.EBML.Value
+import Data.Text.Encoding (decodeUtf8)
 
 getElement :: EBMLSchemas -> Get EBMLElement
 getElement schemas = do
@@ -27,6 +27,9 @@ getElements schemas = do
 
 getBinary :: EBMLElementHeader -> Get EBMLValue
 getBinary elth = EBMLBinary <$> getByteString (fromIntegral elth.size)
+
+getText :: EBMLElementHeader -> Get EBMLValue
+getText elth = EBMLText . decodeUtf8 <$> getByteString (fromIntegral elth.size)
 
 getUnsignedInteger :: EBMLElementHeader -> Get EBMLValue
 getUnsignedInteger = getBinary

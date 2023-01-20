@@ -29,8 +29,8 @@ library
       Codec.EBML.Element
       Codec.EBML.Get
       Codec.EBML.Header
+      Codec.EBML.Pretty
       Codec.EBML.Schema
-      Codec.EBML.Value
   other-modules:
       Paths_ebml
   hs-source-dirs:

@@ -3,6 +3,9 @@ module Codec.EBML.Element where
 
 import Data.Binary.Get (Get, getWord8)
 import Data.Bits (Bits (shift, testBit, (.|.)), (.&.))
+import Data.ByteString (ByteString)
+import Data.Int (Int64)
+import Data.Text (Text)
 import Data.Word (Word32, Word64)
 
 newtype EBMLID = EBMLID Word32
@@ -13,6 +16,22 @@ data EBMLElementHeader = EBMLElementHeader
     { eid :: EBMLID
     , size :: Word64
     }
+    deriving (Show)
+
+data EBMLElement = EBMLElement
+    { header :: EBMLElementHeader
+    , value :: EBMLValue
+    }
+    deriving (Show)
+
+data EBMLValue
+    = EBMLRoot [EBMLElement]
+    | EBMLSignedInteger Int64
+    | EBMLUnsignedInteger Word64
+    | EBMLFloat Double
+    | EBMLText Text
+    | EBMLDate Text
+    | EBMLBinary ByteString
     deriving (Show)
 
 getElementHeader :: Get EBMLElementHeader
