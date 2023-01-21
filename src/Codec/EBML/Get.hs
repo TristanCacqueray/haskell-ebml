@@ -6,6 +6,7 @@ import Data.Word (Word64)
 
 import Codec.EBML.Element
 import Codec.EBML.Schema
+import Data.Bits (Bits)
 
 getElement :: EBMLSchemas -> Get EBMLElement
 getElement schemas = do
@@ -43,7 +44,16 @@ getText elth = case elth.size of
     Just sz -> EBMLText . decodeUtf8 <$> getByteString (fromIntegral sz)
 
 getUnsignedInteger :: EBMLElementHeader -> Get EBMLValue
-getUnsignedInteger = getBinary
+getUnsignedInteger elth = EBMLUnsignedInteger <$> getInt elth.size
+
+getInteger :: EBMLElementHeader -> Get EBMLValue
+getInteger elth = EBMLUnsignedInteger <$> getInt elth.size
+
+getInt :: (Bits a, Integral a) => Maybe Word64 -> Get a
+getInt size = getVar sz 0
+  where
+    -- TODO: check the value is in the [0..8] range
+    sz = maybe 0 fromIntegral size
 
 getRoot :: EBMLSchemas -> EBMLElementHeader -> Get EBMLValue
 getRoot schemas elth = case elth.size of

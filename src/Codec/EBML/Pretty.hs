@@ -23,5 +23,6 @@ prettyElement schemas indent elt = indentTxt <> eltIDTxt <> ": " <> eltValueTxt
         EBMLRoot xs -> "\n" <> mconcat (map (prettyElement schemas (indent + 2)) xs)
         EBMLText txt -> txt <> "\n"
         EBMLBinary bs -> "[raw:" <> Text.pack (show $ BS.length bs) <> " " <> bsTxt bs <> "]\n"
+        EBMLUnsignedInteger x -> Text.pack (show x) <> "\n"
         _ -> "value\n"
     bsTxt = Text.pack . show . BS.take 32
