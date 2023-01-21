@@ -4,7 +4,14 @@
 
 Decode a webm file with:
 
-> EBML.decodeFile EBML.webmSchemas "path/file.webm"
+> EBML.decodeWebMFile "path/file.webm"
+
+Decode a webm stream with:
+
+> let streamReader = EBML.newStreamReader
+> buf <- acquire data
+> let (frames, eStreamReader) = EBML.feedReader buf streamReader
+> … continue when eStreamReader is Right
 
 References:
 
@@ -15,11 +22,14 @@ References:
  - The MSE byte stream format for webm: https://w3c.github.io/mse-byte-stream-format-webm/
 -}
 module Codec.EBML (
-    -- * EBML schemas
-    webmSchemas,
+    -- * WebM decoder
+    decodeWebM,
+    WebMDocument (..),
+    WebMCluster (..),
 
-    -- * EBML decoder
+    -- * Raw EBML decoder
     decodeEBMLDocument,
+    webmSchemas,
 
     -- * EBML stream reader
     module Codec.EBML.Stream,
@@ -35,7 +45,8 @@ module Codec.EBML (
     EBMLSchema (..),
 
     -- * Helpers
-    decodeFile,
+    decodeEBMLFile,
+    decodeWebMFile,
     prettyEBMLDocument,
 
     -- * Low-level API, mostly for testing
@@ -50,6 +61,8 @@ module Codec.EBML (
 
 import Data.Binary.Get (runGetOrFail)
 import Data.ByteString.Lazy qualified as LBS
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Codec.EBML.Element
 import Codec.EBML.Get
@@ -57,22 +70,28 @@ import Codec.EBML.Header
 import Codec.EBML.Pretty
 import Codec.EBML.Schema
 import Codec.EBML.Stream
+import Codec.EBML.WebM
+
+decodeWebM :: LBS.ByteString -> Either Text WebMDocument
+decodeWebM lbs = decodeWebMDocument =<< decodeEBMLDocument webmSchemas lbs
 
 -- | The webm document schemas.
 webmSchemas :: [EBMLSchema]
 webmSchemas = schemaHeader
 
 -- | Lazy decode a 'EBMLDocument'.
-decodeEBMLDocument :: [EBMLSchema] -> LBS.ByteString -> Either String EBMLDocument
+decodeEBMLDocument :: [EBMLSchema] -> LBS.ByteString -> Either Text EBMLDocument
 decodeEBMLDocument schemas lbs = case runGetOrFail (getDocument (compileSchemas schemas)) lbs of
-    Left (_, _, err) -> Left err
+    Left (_, _, err) -> Left (Text.pack err)
     Right ("", _, x) -> Right x
-    Right (_rest, l, _) -> Left ("Left over data at " <> show l)
+    Right (_rest, l, _) -> Left ("Left over data at " <> Text.pack (show l))
 
--- | Throw an error when the file is invalid.
-decodeFile :: [EBMLSchema] -> FilePath -> IO EBMLDocument
-decodeFile schemas fp = do
-    bs <- LBS.readFile fp
-    case decodeEBMLDocument schemas bs of
-        Left e -> error e
-        Right x -> pure x
+-- | Decode a raw EBML file.
+decodeEBMLFile :: [EBMLSchema] -> FilePath -> IO (Either Text EBMLDocument)
+decodeEBMLFile schemas fp = decodeEBMLDocument schemas <$> LBS.readFile fp
+
+-- | Decode a webm file.
+decodeWebMFile :: FilePath -> IO (Either Text WebMDocument)
+decodeWebMFile fp = do
+    ebml <- decodeEBMLFile webmSchemas fp
+    pure $ decodeWebMDocument =<< ebml

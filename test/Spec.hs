@@ -1,20 +1,28 @@
 module Main (main) where
 
+import Control.Exception (SomeException, try)
 import Data.Binary.Get (runGet)
 import Data.Binary.Put (putWord8, runPut)
 import Data.ByteString.Char8 qualified as BS
 import Data.Char (digitToInt)
+import Data.Either (fromRight)
 import Data.Foldable (traverse_)
 import Data.List (foldl')
 import Data.List.Split (chunksOf)
+import Data.Text qualified as Text
 import Data.Word (Word8)
 import Test.Tasty
 import Test.Tasty.Golden
+import Test.Tasty.HUnit
 
 import Codec.EBML qualified as EBML
 
 main :: IO ()
-main = defaultMain $ testGroup "Codec.EBML" [unitTests]
+main = do
+    sampleFile <- readFileMaybe "./data/Volcano_Lava_Sample.webm"
+    defaultMain $ testGroup "Codec.EBML" [unitTests, integrationTests sampleFile]
+  where
+    readFileMaybe fp = fromRight "" <$> try @SomeException (BS.readFile fp)
 
 unitTests :: TestTree
 unitTests =
@@ -44,3 +52,19 @@ readOctet :: String -> Word8
 readOctet s
     | length s /= 8 = error $ "Invalid length: " <> s
     | otherwise = fromIntegral $ foldl' (\acc x -> acc * 2 + digitToInt x) 0 s
+
+integrationTests :: BS.ByteString -> TestTree
+integrationTests sampleFile = testGroup "Integration tests" [testCase "sample" decodeSample]
+  where
+    decodeSample
+        | BS.length sampleFile /= 53054906 = do
+            -- the file was not checkout
+            pure ()
+        | otherwise =
+            case EBML.decodeWebM (BS.fromStrict sampleFile) of
+                Left e -> error (Text.unpack e)
+                Right webM -> do
+                    webM.timestampScale @?= 1000000
+                    length webM.clusters @?= 49
+                    (head webM.clusters).timestamp @?= 0
+                    (webM.clusters !! 1).timestamp @?= 2794

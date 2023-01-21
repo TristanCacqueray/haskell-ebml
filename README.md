@@ -8,12 +8,18 @@ Use this library to decode [ebml][ebml], [webm][webm] and [mkv][mkv] file format
 Implemented features:
 
 - [x] Basic data types (binary, text, int)
-- [ ] Float and date types
-- [ ] Schemas validation
 - [x] Unknown-sized element
 - [x] Pretty printer
 - [x] Incremental stream parser
+- [ ] WebM track informations
+- [ ] Float and date types
+- [ ] Schemas validation
 - [ ] Property tests
+
+## Contribute
+
+Contributions and bug reports are welcome!
+Run the `./bin/run-tests` script to validate a commit.
 
 [rfc-8794]: https://datatracker.ietf.org/doc/rfc8794/
 [ebml]: https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown

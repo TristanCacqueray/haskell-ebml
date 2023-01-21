@@ -4,6 +4,8 @@ import Control.Monad (when)
 import Data.Binary.Get qualified as Get
 import Data.ByteString qualified as BS
 import Data.ByteString.Builder qualified as BS
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Codec.EBML.Element
 import Codec.EBML.Get
@@ -17,7 +19,7 @@ data StreamFrame = StreamFrame
     -- ^ The raw data.
     }
 
--- | A stream reader hold on the data previously read, until a new frame is completed.
+-- | A stream reader hold on the data previously read, until a new 'StreamFrame' is completed.
 data StreamReader = StreamReader
     { acc :: BS.Builder
     , consumed :: Int
@@ -58,21 +60,21 @@ newStreamReader = StreamReader mempty 0 (Get.runGetIncremental getInitialization
 
 The first frame contains the initialization data, then the next are the media segments.
 -}
-feedReader :: BS.ByteString -> StreamReader -> ([StreamFrame], Either String StreamReader)
+feedReader :: BS.ByteString -> StreamReader -> ([StreamFrame], Either Text StreamReader)
 feedReader = go []
   where
     segmentDecoder = Get.runGetIncremental getCluster
     strictBuilder = BS.toStrict . BS.toLazyByteString
     -- This is the end
     go [] "" ir = case Get.pushEndOfInput ir.decoder of
-        Get.Fail _ _ s -> ([], Left s)
+        Get.Fail _ _ s -> ([], Left (Text.pack s))
         Get.Partial _ -> ([], Left "Missing data")
         Get.Done "" _ xs -> ([StreamFrame xs (strictBuilder ir.acc)], Right ir)
         Get.Done{} -> ([], Left "Left-over data")
     -- Feed the decoder
     go chunks bs ir =
         case Get.pushChunk ir.decoder bs of
-            Get.Fail _ _ s -> (reverse chunks, Left s)
+            Get.Fail _ _ s -> (reverse chunks, Left (Text.pack s))
             newDecoder@(Get.Partial _) ->
                 let newAcc = ir.acc <> BS.byteString bs
                     newIR = StreamReader newAcc (ir.consumed + BS.length bs) newDecoder

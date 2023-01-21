@@ -35,6 +35,7 @@ library
       Codec.EBML.Pretty
       Codec.EBML.Schema
       Codec.EBML.Stream
+      Codec.EBML.WebM
       Paths_ebml
   hs-source-dirs:
       src
@@ -107,4 +108,6 @@ test-suite spec
     , split
     , tasty
     , tasty-golden
+    , tasty-hunit
+    , text
   default-language: GHC2021
