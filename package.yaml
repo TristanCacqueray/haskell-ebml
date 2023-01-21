@@ -12,6 +12,7 @@ language: GHC2021
 category: Codec
 extra-source-files:
   - CHANGELOG.md
+  - data/firefox-mrec-opus.webm
 
 ghc-options:
   - -Wall

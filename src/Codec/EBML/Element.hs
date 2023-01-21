@@ -22,14 +22,14 @@ data EBMLElementHeader = EBMLElementHeader
     , size :: Maybe Word64
     -- ^ size is Nothing for unknown-sized element.
     }
-    deriving (Show)
+    deriving (Eq, Show)
 
 -- | EBML element.
 data EBMLElement = EBMLElement
     { header :: EBMLElementHeader
     , value :: EBMLValue
     }
-    deriving (Show)
+    deriving (Eq, Show)
 
 -- | EBML element value.
 data EBMLValue
@@ -40,7 +40,7 @@ data EBMLValue
     | EBMLText Text
     | EBMLDate Text
     | EBMLBinary ByteString
-    deriving (Show)
+    deriving (Eq, Show)
 
 getElementHeader :: Get EBMLElementHeader
 getElementHeader = EBMLElementHeader <$> getElementID <*> getMaybeDataSize
