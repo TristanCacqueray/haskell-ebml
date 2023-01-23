@@ -1,5 +1,7 @@
 # EBML parser
 
+[![Hackage](https://img.shields.io/hackage/v/ebml.svg?logo=haskell&label=ebml)](https://hackage.haskell.org/package/ebml)
+
 A pure decoder for [rfc-8794][rfc-8794].
 Use this library to parse Extensible Binary Meta Language [ebml][ebml], [webm][webm] and [mkv][mkv] file format.
 

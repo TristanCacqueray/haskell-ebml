@@ -1,5 +1,5 @@
 name: ebml
-version: 0.0.1.0
+version: 0.1.0.0
 synopsis: A pure EBML parser
 description: |
   Pure decoder for the Extensible Binary Meta Language (EBML) format.
