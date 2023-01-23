@@ -26,8 +26,9 @@ printSplit ir handl = do
     buf <- BS.hGet handl 2048
     case EBML.feedReader buf ir of
         Left e -> error (Text.unpack e)
+        Right (Nothing, _) | buf == "" -> putStrLn "Done!"
         Right (mFrame, newIR) -> do
             case mFrame of
                 Nothing -> putStrLn "Need more data"
-                Just frame -> putStrLn $ "Got a new frame: " <> show (BS.length frame.media)
+                Just frame -> putStrLn $ "Got a new frame: " <> show (BS.length frame.media) <> " " <> show (BS.take 8 frame.media)
             printSplit newIR handl

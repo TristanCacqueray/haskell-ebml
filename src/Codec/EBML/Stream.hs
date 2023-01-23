@@ -1,6 +1,6 @@
 module Codec.EBML.Stream (StreamReader, newStreamReader, StreamFrame (..), feedReader) where
 
-import Control.Monad (when)
+import Control.Monad (void, when)
 import Data.Binary.Get qualified as Get
 import Data.ByteString qualified as BS
 import Data.Text (Text)
@@ -58,10 +58,23 @@ getCluster = do
     clusterHead <- getElementHeader
     when (clusterHead.eid /= 0x1F43B675) do
         fail $ "Invalid cluster: " <> show clusterHead
+    getClusterBody
+
+getClusterBody :: Get.Get ()
+getClusterBody = do
     elts <- getUntil streamSchema 0x1F43B675
     case elts of
         (elt : _) | elt.header.eid == 0xE7 -> pure ()
         _ -> fail "Cluster first element is not a timestamp"
+
+getClusterRemaining :: Get.Get ()
+getClusterRemaining = do
+    elth <- getElementHeader
+    if elth.eid == 0x1F43B675
+        then -- This is in fact a new cluster, get its body
+            getClusterBody
+        else -- This is a cluster left-over, let's keep on reading until a new start
+            void (getUntil streamSchema 0x1F43B675)
 
 -- | Initialize a stream reader.
 newStreamReader :: StreamReader
@@ -71,7 +84,6 @@ newStreamReader = StreamReader [] 0 Nothing (Get.runGetIncremental getInitializa
 feedReader :: BS.ByteString -> StreamReader -> Either Text (Maybe StreamFrame, StreamReader)
 feedReader = go Nothing
   where
-    segmentDecoder = Get.runGetIncremental getCluster
     -- This is the end
     go Nothing "" sr = case Get.pushEndOfInput sr.decoder of
         Get.Fail _ _ s -> Left (Text.pack s)
@@ -89,16 +101,23 @@ feedReader = go Nothing
                         Just _ -> []
                     newSR = StreamReader newAcc (sr.consumed + BS.length bs) sr.header newDecoder
                  in Right (mFrame, newSR)
-            Get.Done leftover consumed _ -> do
-                let
-                    -- The decoder position in the current buffer.
-                    currentPos = fromIntegral consumed - sr.consumed
-                    -- The header is either the one already parsed, or the current complete decoded buffer.
-                    newHeader = case sr.header of
-                        Just header -> header
-                        Nothing -> mconcat $ reverse (BS.take currentPos bs : sr.acc)
-                    -- The new frame starts after what was decoded.
-                    newFrame = StreamFrame newHeader (BS.drop currentPos bs)
-                    newIR = StreamReader [] 0 (Just newHeader) segmentDecoder
-                 in
-                    go (Just newFrame) leftover newIR
+            Get.Done leftover consumed _
+                | BS.null leftover ->
+                    -- We might have ended on a in-cluster element, use the remainingDecoder next time
+                    Right (mFrame, newIR remainingDecoder)
+                | otherwise ->
+                    -- There might be a new frame after, keep on decoding
+                    go newFrame leftover (newIR segmentDecoder)
+              where
+                -- The header is either the one already parsed, or the current complete decoded buffer.
+                newHeader = case sr.header of
+                    Just header -> header
+                    Nothing ->
+                        let currentPos = fromIntegral consumed - sr.consumed
+                         in mconcat $ reverse (BS.take currentPos bs : sr.acc)
+                -- The new frame starts after what was decoded.
+                newFrame = Just (StreamFrame newHeader leftover)
+                newIR = StreamReader [] 0 (Just newHeader)
+
+    remainingDecoder = Get.runGetIncremental getClusterRemaining
+    segmentDecoder = Get.runGetIncremental getCluster

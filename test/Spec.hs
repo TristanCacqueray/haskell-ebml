@@ -83,15 +83,15 @@ integrationTests sampleFile streamFile =
                          in case EBML.feedReader cur sr of
                                 Left e -> error (Text.unpack e)
                                 Right (mFrame, nextSR)
-                                    | cur == "" -> newAcc
+                                    | cur == "" -> reverse newAcc
                                     | otherwise -> go next nextSR newAcc
                                   where
                                     newAcc = maybe acc (: acc) mFrame
-                    frames = reverse $ go bs EBML.newStreamReader []
+                    frames = go bs EBML.newStreamReader []
                 -- this works because the chunk size is small enough to get every segment.
                 length frames @?= clusterCount
                 BS.length (head frames).initialization @?= headerSize
                 BS.take 4 (head frames).initialization @?= "\x1A\x45\xdf\xa3"
-                forM_ (take 5 frames) $ \frame ->
+                forM_ frames $ \frame -> do
                     BS.take 4 frame.media @?= "\x1f\x43\xb6\x75"
             ]
