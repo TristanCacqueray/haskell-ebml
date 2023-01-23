@@ -21,6 +21,7 @@ build-type:     Simple
 extra-source-files:
     CHANGELOG.md
     data/firefox-mrec-opus.webm
+    data/var-int.golden
 
 source-repository head
   type: git
