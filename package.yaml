@@ -2,9 +2,9 @@ name: ebml
 version: 0.0.1.0
 synopsis: A pure EBML parser
 description: |
-  Decode Extensible Binary Meta Language (EBML) format.
+  Pure decoder for the Extensible Binary Meta Language (EBML) format.
 
-  Use this library to parse and split webm file.
+  Use this library to parse mkv/webm file or split a webm stream segments.
 author: Tristan Cacqueray
 maintainer: tdecacqu@redhat.com
 github: TristanCacqueray/haskell-ebml

@@ -28,7 +28,9 @@
             fourmolu
             hsPkgs.doctest
             mkvtoolnix-cli
+            pkgs.gst_all_1.gstreamer
           ];
+        GST_PLUGIN_PATH = "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0/:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0/";
       };
     };
 }

@@ -1,12 +1,11 @@
-module Main where
+module Main (main) where
 
 import Codec.EBML qualified as EBML
 import Data.ByteString qualified as BS
-import Data.Foldable (traverse_)
 import Data.Text qualified as Text
 import Data.Text.IO qualified
 import System.Environment (getArgs)
-import System.IO (Handle, IOMode (ReadMode), withBinaryFile)
+import System.IO (Handle, IOMode (ReadMode), stdin, withBinaryFile)
 
 main :: IO ()
 main =
@@ -18,18 +17,17 @@ main =
         ["split", fp] -> do
             let ir = EBML.newStreamReader
             withBinaryFile fp ReadMode (printSplit ir)
+        [] -> printSplit EBML.newStreamReader stdin
         _ -> error "usage: haskell-ebml FILE"
 
 printSplit :: EBML.StreamReader -> Handle -> IO ()
 printSplit ir handl = do
-    putStrLn "Reading 2048 bytes"
+    putStr "Reading 2048 bytes... "
     buf <- BS.hGet handl 2048
-    let (chunks, result) = EBML.feedReader buf ir
-    traverse_ printChunk chunks
-    case result of
+    case EBML.feedReader buf ir of
         Left e -> error (Text.unpack e)
-        Right nextIR
-            | buf == mempty -> putStrLn "Done."
-            | otherwise -> printSplit nextIR handl
-  where
-    printChunk bs = putStrLn $ "Got chunk: " <> show (BS.length bs.buffer)
+        Right (mFrame, newIR) -> do
+            case mFrame of
+                Nothing -> putStrLn "Need more data"
+                Just frame -> putStrLn $ "Got a new frame: " <> show (BS.length frame.media)
+            printSplit newIR handl

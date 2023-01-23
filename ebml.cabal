@@ -7,9 +7,9 @@ cabal-version: 1.12
 name:           ebml
 version:        0.0.1.0
 synopsis:       A pure EBML parser
-description:    Decode Extensible Binary Meta Language (EBML) format.
+description:    Pure decoder for the Extensible Binary Meta Language (EBML) format.
                 .
-                Use this library to parse and split webm file.
+                Use this library to parse mkv/webm file or split a webm stream segments.
 category:       Codec
 homepage:       https://github.com/TristanCacqueray/haskell-ebml#readme
 bug-reports:    https://github.com/TristanCacqueray/haskell-ebml/issues

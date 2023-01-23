@@ -6,17 +6,18 @@ Decode a webm file with:
 
 > EBML.decodeWebMFile "path/file.webm"
 
-Decode a webm stream with:
+Split a webm stream segments with:
 
 > let streamReader = EBML.newStreamReader
 > buf <- acquire data
-> let (frames, eStreamReader) = EBML.feedReader buf streamReader
-> … continue when eStreamReader is Right
+> EBML.feedReader buf streamReader
 
 References:
 
+ - EBML specification introduction: https://matroska-org.github.io/libebml/specs.html
+ - Document layout: https://www.matroska.org/technical/diagram.html
  - The matroska schema: https://github.com/ietf-wg-cellar/matroska-specification/blob/master/ebml_matroska.xml
- - The matroska doc: https://www.matroska.org/technical/elements.html
+ - The matroska schema doc: https://www.matroska.org/technical/elements.html
  - The webm guidelines: https://www.webmproject.org/docs/container/
  - The MSE byte stream format spec: https://w3c.github.io/media-source/index.html#byte-stream-format-specs
  - The MSE byte stream format for webm: https://w3c.github.io/mse-byte-stream-format-webm/
@@ -72,6 +73,7 @@ import Codec.EBML.Schema
 import Codec.EBML.Stream
 import Codec.EBML.WebM
 
+-- | Lazy decode a 'WebMDocument'.
 decodeWebM :: LBS.ByteString -> Either Text WebMDocument
 decodeWebM lbs = decodeWebMDocument =<< decodeEBMLDocument webmSchemas lbs
 

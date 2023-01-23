@@ -6,7 +6,7 @@ import Data.Binary.Put (putWord8, runPut)
 import Data.ByteString.Char8 qualified as BS
 import Data.Char (digitToInt)
 import Data.Either (fromRight)
-import Data.Foldable (traverse_)
+import Data.Foldable (forM_, traverse_)
 import Data.List (foldl')
 import Data.List.Split (chunksOf)
 import Data.Text qualified as Text
@@ -58,11 +58,11 @@ integrationTests :: BS.ByteString -> BS.ByteString -> TestTree
 integrationTests sampleFile streamFile =
     testGroup
         "Integration tests"
-        [ testGroup "sample" (decodeFile sampleFile 53054906 49 0 2794)
-        , testGroup "stream" (decodeFile streamFile 3499 6 6 1006)
+        [ testGroup "sample" (decodeFile sampleFile 53054906 4458 49 0 2794)
+        , testGroup "stream" (decodeFile streamFile 3499 260 6 6 1006)
         ]
   where
-    decodeFile bs size clusterCount clusterTs1 clusterTs2
+    decodeFile bs size headerSize clusterCount clusterTs1 clusterTs2
         | BS.length bs /= size =
             -- the file was not checkout
             [testCase "skip" (pure ())]
@@ -72,7 +72,7 @@ integrationTests sampleFile streamFile =
                 case EBML.decodeWebM (BS.fromStrict bs) of
                     Left e -> error (Text.unpack e)
                     Right webM -> do
-                        webM.timestampScale @?= 1000000
+                        webM.timestampScale @?= 1_000_000
                         length webM.clusters @?= clusterCount
                         (head webM.clusters).timestamp @?= clusterTs1
                         (webM.clusters !! 1).timestamp @?= clusterTs2
@@ -81,12 +81,17 @@ integrationTests sampleFile streamFile =
                 let go buf sr acc =
                         let (cur, next) = BS.splitAt 256 buf
                          in case EBML.feedReader cur sr of
-                                (_, Left e) -> error (Text.unpack e)
-                                (xs, Right nextSR)
-                                    | cur == "" -> (acc <> xs)
-                                    | otherwise -> go next nextSR (acc <> xs)
-                    frames = go bs EBML.newStreamReader []
-                length frames @?= (clusterCount + 1)
-                (head (frames !! 1).elements).value @?= EBML.EBMLUnsignedInteger clusterTs1
-                (head (frames !! 2).elements).value @?= EBML.EBMLUnsignedInteger clusterTs2
+                                Left e -> error (Text.unpack e)
+                                Right (mFrame, nextSR)
+                                    | cur == "" -> newAcc
+                                    | otherwise -> go next nextSR newAcc
+                                  where
+                                    newAcc = maybe acc (: acc) mFrame
+                    frames = reverse $ go bs EBML.newStreamReader []
+                -- this works because the chunk size is small enough to get every segment.
+                length frames @?= clusterCount
+                BS.length (head frames).initialization @?= headerSize
+                BS.take 4 (head frames).initialization @?= "\x1A\x45\xdf\xa3"
+                forM_ (take 5 frames) $ \frame ->
+                    BS.take 4 frame.media @?= "\x1f\x43\xb6\x75"
             ]

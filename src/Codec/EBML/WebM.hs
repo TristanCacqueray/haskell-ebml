@@ -12,14 +12,20 @@ import Codec.EBML.Element
 import Data.Foldable (find)
 import Data.Maybe (catMaybes)
 
+-- | A WebM document.
 data WebMDocument = WebMDocument
     { timestampScale :: Word64
+    -- ^ Base unit for Segment Ticks and Track Ticks, in nanoseconds. A TimestampScale of 1_000_000 means segments' timestamps are expressed in milliseconds;
     , clusters :: [WebMCluster]
+    -- ^ The list of clusters.
     }
 
+-- | A WebM cluster, e.g. a media segment.
 data WebMCluster = WebMCluster
     { timestamp :: Word64
+    -- ^ Absolute timestamp of the cluster.
     , content :: [EBMLElement]
+    -- ^ The cluster elements.
     }
 
 decodeWebMDocument :: EBMLDocument -> Either Text WebMDocument
