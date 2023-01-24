@@ -1,6 +1,6 @@
 module Codec.EBML.Stream (StreamReader, newStreamReader, StreamFrame (..), feedReader) where
 
-import Control.Monad (void, when)
+import Control.Monad (when)
 import Data.Binary.Get qualified as Get
 import Data.ByteString qualified as BS
 import Data.Text (Text)
@@ -22,18 +22,31 @@ data StreamFrame = StreamFrame
 
 -- | Create a stream reader with 'newStreamReader', and decode media segments with 'feedReader'.
 data StreamReader = StreamReader
-    { acc :: [BS.ByteString]
-    -- ^ Accumulate data in case the header is not completed in the first buffer.
-    , consumed :: Int
-    -- ^ Keep track of the decoder position accross multiple buffers.
-    , header :: Maybe BS.ByteString
-    -- ^ The stream initialization segments.
+    { header :: Either (Int, [BS.ByteString]) BS.ByteString
+    -- ^ The stream initialization segments, either an accumulator (read bytes, list of buffer), either the full segments.
     , decoder :: Get.Decoder ()
     -- ^ The current decoder.
     }
 
 streamSchema :: EBMLSchemas
 streamSchema = compileSchemas schemaHeader
+
+-- | Read elements until the first cluster eid.
+getUntilNextCluster :: Get.Get [EBMLElement]
+getUntilNextCluster =
+    Get.lookAheadM getNonCluster >>= \case
+        Just elt -> do
+            elts <- getUntilNextCluster
+            pure (elt : elts)
+        Nothing -> pure []
+  where
+    getNonCluster = do
+        eid <- getElementID
+        if eid == 0x1F43B675
+            then pure Nothing
+            else do
+                elth <- EBMLElementHeader eid <$> getMaybeDataSize
+                Just <$> getElementValue streamSchema elth
 
 -- | Read the initialization frame.
 getInitialization :: Get.Get ()
@@ -47,7 +60,7 @@ getInitialization = do
     segmentHead <- getElementHeader
     when (segmentHead.eid /= 0x18538067) do
         fail $ "Invalid segment: " <> show segmentHead
-    elts <- getUntil streamSchema 0x1F43B675
+    elts <- getUntilNextCluster
     case WebM.decodeSegment elts of
         Right _webmDocument -> pure ()
         Left err -> fail (Text.unpack err)
@@ -58,66 +71,41 @@ getCluster = do
     clusterHead <- getElementHeader
     when (clusterHead.eid /= 0x1F43B675) do
         fail $ "Invalid cluster: " <> show clusterHead
-    getClusterBody
-
-getClusterBody :: Get.Get ()
-getClusterBody = do
-    elts <- getUntil streamSchema 0x1F43B675
+    elts <- getUntilNextCluster
     case elts of
         (elt : _) | elt.header.eid == 0xE7 -> pure ()
         _ -> fail "Cluster first element is not a timestamp"
 
-getClusterRemaining :: Get.Get ()
-getClusterRemaining = do
-    elth <- getElementHeader
-    if elth.eid == 0x1F43B675
-        then -- This is in fact a new cluster, get its body
-            getClusterBody
-        else -- This is a cluster left-over, let's keep on reading until a new start
-            void (getUntil streamSchema 0x1F43B675)
-
 -- | Initialize a stream reader.
 newStreamReader :: StreamReader
-newStreamReader = StreamReader [] 0 Nothing (Get.runGetIncremental getInitialization)
+newStreamReader = StreamReader (Left (0, [])) (Get.runGetIncremental getInitialization)
 
 -- | Feed data into a stream reader. Returns either an error, or maybe a new 'StreamFrame' and an updated StreamReader.
 feedReader :: BS.ByteString -> StreamReader -> Either Text (Maybe StreamFrame, StreamReader)
 feedReader = go Nothing
   where
     -- This is the end
-    go Nothing "" sr = case Get.pushEndOfInput sr.decoder of
-        Get.Fail _ _ s -> Left (Text.pack s)
-        Get.Partial _ -> Left "Missing data"
-        Get.Done "" _ _ -> Right (Nothing, sr)
-        Get.Done{} -> Left "Left-over data"
+    go Nothing "" sr = Right (Nothing, sr)
     -- Feed the decoder
     go mFrame bs sr =
         case Get.pushChunk sr.decoder bs of
             Get.Fail _ _ s -> Left (Text.pack s)
-            newDecoder@(Get.Partial _) ->
-                let newAcc = case sr.header of
-                        Nothing -> bs : sr.acc
-                        -- We don't need to accumulate data once the header is known.
-                        Just _ -> []
-                    newSR = StreamReader newAcc (sr.consumed + BS.length bs) sr.header newDecoder
-                 in Right (mFrame, newSR)
-            Get.Done leftover consumed _
-                | BS.null leftover ->
-                    -- We might have ended on a in-cluster element, use the remainingDecoder next time
-                    Right (mFrame, newIR remainingDecoder)
-                | otherwise ->
-                    -- There might be a new frame after, keep on decoding
-                    go newFrame leftover (newIR segmentDecoder)
+            -- More data is needed.
+            newDecoder@(Get.Partial _) -> Right (mFrame, newSR)
+              where
+                -- Accumulate the buffer for the initialization segments if needed.
+                newHeader = case sr.header of
+                    Left (consumed, acc) -> Left (consumed + BS.length bs, bs : acc)
+                    Right _ -> sr.header
+                newSR = StreamReader newHeader newDecoder
+            Get.Done leftover consumed _ -> go newFrame leftover newSR
               where
                 -- The header is either the one already parsed, or the current complete decoded buffer.
                 newHeader = case sr.header of
-                    Just header -> header
-                    Nothing ->
-                        let currentPos = fromIntegral consumed - sr.consumed
-                         in mconcat $ reverse (BS.take currentPos bs : sr.acc)
+                    Left (prevConsumed, acc) ->
+                        let currentPos = fromIntegral consumed - prevConsumed
+                         in mconcat $ reverse (BS.take currentPos bs : acc)
+                    Right header -> header
                 -- The new frame starts after what was decoded.
                 newFrame = Just (StreamFrame newHeader leftover)
-                newIR = StreamReader [] 0 (Just newHeader)
-
-    remainingDecoder = Get.runGetIncremental getClusterRemaining
-    segmentDecoder = Get.runGetIncremental getCluster
+                newSR = StreamReader (Right newHeader) (Get.runGetIncremental getCluster)

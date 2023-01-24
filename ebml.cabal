@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           ebml
-version:        0.1.0.0
+version:        0.1.1.0
 synopsis:       A pure EBML parser
 description:    Pure decoder for the Extensible Binary Meta Language (EBML) format.
                 .
