@@ -39,6 +39,7 @@ unitTests =
               , "0010 0000 0000 0000 0000 0010"
               , "0001 0000 0000 0000 0000 0000 0000 0010"
               ]
+        , testCase "Incremental lookahead" (pure ())
         ]
 
 testVarInts :: String -> BS.ByteString
@@ -60,6 +61,7 @@ integrationTests sampleFile streamFile =
         "Integration tests"
         [ testGroup "sample" (decodeFile sampleFile 53054906 4458 49 0 2794)
         , testGroup "stream" (decodeFile streamFile 3499 260 6 6 1006)
+        , testCase "Incremental lookahead" testIncrementalLookahead
         ]
   where
     decodeFile bs size headerSize clusterCount clusterTs1 clusterTs2
@@ -95,3 +97,65 @@ integrationTests sampleFile streamFile =
                 forM_ frames $ \frame -> do
                     BS.take 4 frame.media @?= "\x1f\x43\xb6\x75"
             ]
+
+    testIncrementalLookahead = do
+        let eltA = 0x10
+            segment = 0x2b
+            eltB = 0x43
+            cluster1 = 0x104
+            eltC = 0x113
+            cluster2 = 0x36b
+        -- validate the addresses
+        BS.take 4 (BS.drop segment streamFile) @?= "\x18\x53\x80\x67"
+        BS.take 4 (BS.drop cluster1 streamFile) @?= "\x1f\x43\xb6\x75"
+        BS.take 4 (BS.drop cluster2 streamFile) @?= "\x1f\x43\xb6\x75"
+        let getIDat pos =
+                let elth = runGet EBML.getElementHeader (BS.fromStrict $ BS.drop pos streamFile)
+                 in elth.eid
+        getIDat eltA @?= EBML.EBMLID 0x42f7
+        getIDat eltB @?= EBML.EBMLID 0x1549a966
+        getIDat eltC @?= EBML.EBMLID 0xa3
+
+        -- validate the first two media cluster
+        let c1 = "\x1f\x43\xb6\x75\x01\xff\xff\xff\xff\xff\xff\xff\xe7\x81\x06\xa3"
+            c2 = "\x1f\x43\xb6\x75\x01\xff\xff\xff\xff\xff\xff\xff\xe7\x82\x03\xee\xa3"
+        BS.drop cluster1 streamFile `checkPrefix` c1
+        BS.drop cluster2 streamFile `checkPrefix` c2
+
+        -- Test stream reader with pathological buffer size
+        let runIncrementalTest size = testIncremental size EBML.newStreamReader streamFile [c1, c2]
+        -- Make sure the first two cluster are covered.
+        forM_ [1, 2, 7] runIncrementalTest
+        forM_ [eltA, segment, eltB, cluster1, eltC] $ \pos -> do
+            runIncrementalTest pos
+            forM_ [15, 8, 7, 4, 2, 1] $ \offset -> do
+                runIncrementalTest (pos - offset)
+                runIncrementalTest (pos + offset)
+
+        -- Until c2 can be parsed, the latest media segment must be c1
+        testIncremental cluster2 EBML.newStreamReader streamFile [c1]
+        forM_ [1, 2, 3] $ \offset -> do
+            testIncremental (cluster2 - offset) EBML.newStreamReader streamFile [c1]
+            testIncremental (cluster2 + offset) EBML.newStreamReader streamFile [c1]
+
+        -- The buffer contains both clusters, the latest media segment must be c2
+        forM_ [4, 5, 8, 16, 24] $ \offset -> do
+            testIncremental (cluster2 + offset) EBML.newStreamReader streamFile [c2]
+
+checkPrefix :: HasCallStack => BS.ByteString -> BS.ByteString -> Assertion
+checkPrefix b1 b2 = BS.take (BS.length b2) b1 @?= BS.take (BS.length b1) b2
+
+testIncremental :: HasCallStack => Int -> EBML.StreamReader -> BS.ByteString -> [BS.ByteString] -> IO ()
+testIncremental _ _ _ [] = pure ()
+testIncremental _ _ "" _ = error "Reached the end of file"
+testIncremental size sr buf clusters@(x : xs) = do
+    let (chunk, nextBuf) = BS.splitAt size buf
+    case EBML.feedReader chunk sr of
+        Left e -> error (Text.unpack e)
+        Right (mFrame, nextSR) -> do
+            nextClusters <- case mFrame of
+                Nothing -> pure clusters
+                Just f -> do
+                    (f.media <> nextBuf) `checkPrefix` x
+                    pure xs
+            testIncremental size nextSR nextBuf nextClusters

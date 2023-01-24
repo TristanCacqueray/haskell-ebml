@@ -1,3 +1,29 @@
+{- | This module contains the incremental decoder logic to process a continuous stream.
+
+Here is an example stream layout:
+
+> | EBML | SIZE | ELT | ELTA | ELT | ... | SEGMENT | USIZE | ELT | ELTB | ... |
+> | CLUSTER | USIZE | ELT | ELTC   | ... | CLUSTER | USIZE | ELT | ELT  | ... |
+
+There are two difficulties:
+
+- The element are not aligned, a segment id can start at position 15.
+- Unknown sized element, such as segment and cluster, need to use a look-ahead to ensure it is completed.
+
+Here are the main scenarios:
+
+- The initial buffers does not contains the begining of a media segment.
+  In that case we need to accumulate the data to provide the complete initialization segments.
+
+- The buffer contains multiple segments. In that case we need to find the last one, e.g. the most recent.
+
+- The buffer ends on the middle of the cluster id, e.g. "...\x1f\x43".
+  In that case we need to wait for the next buffer to confirm a new media segment exists.
+  We also need to returns the end of the previous buffer, so that the media segment does start with "\x1f\x43...".
+  This is somehow already managed by the 'Data.Binary.Get.runGetIncremental'.
+
+Checkout the 'testIncrementalLookahead' case in the test/Spec.hs module that validates these scenarios.
+-}
 module Codec.EBML.Stream (StreamReader, newStreamReader, StreamFrame (..), feedReader) where
 
 import Control.Monad (when)
