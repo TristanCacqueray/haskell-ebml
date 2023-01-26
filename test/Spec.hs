@@ -83,10 +83,10 @@ integrationTests sampleFile streamFile =
                 let go buf sr acc =
                         let (cur, next) = BS.splitAt 256 buf
                          in case EBML.feedReader cur sr of
-                                Left e -> error (Text.unpack e)
-                                Right (mFrame, nextSR)
-                                    | cur == "" -> reverse newAcc
-                                    | otherwise -> go next nextSR newAcc
+                                Left e
+                                    | cur == "" -> reverse acc
+                                    | otherwise -> error (Text.unpack e)
+                                Right (mFrame, nextSR) -> go next nextSR newAcc
                                   where
                                     newAcc = maybe acc (: acc) mFrame
                     frames = go bs EBML.newStreamReader []

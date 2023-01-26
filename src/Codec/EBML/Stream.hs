@@ -111,7 +111,7 @@ feedReader :: BS.ByteString -> StreamReader -> Either Text (Maybe StreamFrame, S
 feedReader = go Nothing
   where
     -- This is the end
-    go Nothing "" sr = Right (Nothing, sr)
+    go Nothing "" _ = Left "empty buffer"
     -- Feed the decoder
     go mFrame bs sr =
         case Get.pushChunk sr.decoder bs of
