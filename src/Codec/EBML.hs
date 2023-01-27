@@ -65,9 +65,9 @@ import Data.ByteString.Lazy qualified as LBS
 import Data.Text (Text)
 import Data.Text qualified as Text
 
+import Codec.EBML.Decoder
 import Codec.EBML.Element
-import Codec.EBML.Get
-import Codec.EBML.Header
+import Codec.EBML.Matroska
 import Codec.EBML.Pretty
 import Codec.EBML.Schema
 import Codec.EBML.Stream

@@ -1,4 +1,4 @@
-module Codec.EBML.Get where
+module Codec.EBML.Decoder where
 
 import Data.Binary.Get (Get, bytesRead, getByteString, isEmpty, lookAheadM)
 import Data.Text.Encoding (decodeUtf8)

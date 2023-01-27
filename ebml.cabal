@@ -31,9 +31,9 @@ library
   exposed-modules:
       Codec.EBML
   other-modules:
+      Codec.EBML.Decoder
       Codec.EBML.Element
-      Codec.EBML.Get
-      Codec.EBML.Header
+      Codec.EBML.Matroska
       Codec.EBML.Pretty
       Codec.EBML.Schema
       Codec.EBML.Stream

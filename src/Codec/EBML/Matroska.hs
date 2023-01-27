@@ -1,10 +1,9 @@
--- | Header schema definition, see: https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#ebml-header-elements
-module Codec.EBML.Header where
+module Codec.EBML.Matroska where
 
 import Data.Text (Text)
 
+import Codec.EBML.Decoder
 import Codec.EBML.Element
-import Codec.EBML.Get
 import Codec.EBML.Schema
 
 schemaHeader :: [EBMLSchema]
