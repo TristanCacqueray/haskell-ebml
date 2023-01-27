@@ -1,11 +1,12 @@
 module Main (main) where
 
-import Codec.EBML qualified as EBML
 import Data.ByteString qualified as BS
 import Data.Text qualified as Text
 import Data.Text.IO qualified
 import System.Environment (getArgs)
 import System.IO (Handle, IOMode (ReadMode), stdin, withBinaryFile)
+
+import Codec.EBML qualified as EBML
 
 main :: IO ()
 main =
@@ -25,8 +26,9 @@ printSplit ir handl = do
     putStr "Reading 2048 bytes... "
     buf <- BS.hGet handl 2048
     case EBML.feedReader buf ir of
-        Left e -> error (Text.unpack e)
-        Right (Nothing, _) | buf == "" -> putStrLn "Done!"
+        Left e
+            | buf == "" -> putStrLn "Done!"
+            | otherwise -> error (Text.unpack e)
         Right (mFrame, newIR) -> do
             case mFrame of
                 Nothing -> putStrLn "Need more data"

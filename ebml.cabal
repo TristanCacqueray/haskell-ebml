@@ -10,6 +10,10 @@ synopsis:       A pure EBML parser
 description:    Pure decoder for the Extensible Binary Meta Language (EBML) format.
                 .
                 Use this library to parse mkv/webm file or split a webm stream segments.
+                .
+                Checkout a motivating use-case presented in this blog post: [Broadcasting a WebM stream using MSE](https://tristancacqueray.github.io/blog/broadcasting-webm).
+                .
+                Read the haskell-ebml demo app for simple usage: [Main.hs](https://github.com/TristanCacqueray/haskell-ebml/blob/main/app/Main.hs).
 category:       Codec
 homepage:       https://github.com/TristanCacqueray/haskell-ebml#readme
 bug-reports:    https://github.com/TristanCacqueray/haskell-ebml/issues
