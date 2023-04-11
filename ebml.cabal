@@ -115,5 +115,6 @@ test-suite spec
     , tasty
     , tasty-golden
     , tasty-hunit
+    , tasty-quickcheck
     , text
   default-language: GHC2021

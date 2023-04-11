@@ -71,3 +71,4 @@ tests:
       - tasty-golden
       - binary
       - split
+      - tasty-quickcheck

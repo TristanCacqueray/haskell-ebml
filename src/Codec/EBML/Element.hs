@@ -1,7 +1,9 @@
 -- | EBML core data decoder, see: https://matroska-org.github.io/libebml/specs.html
 module Codec.EBML.Element where
 
+import Control.Monad (when)
 import Data.Binary.Get (Get, getWord8)
+import Data.Binary.Put (Put, putWord8)
 import Data.Bits (Bits (shift, testBit, (.|.)), (.&.))
 import Data.ByteString (ByteString)
 import Data.Int (Int64)
@@ -86,3 +88,22 @@ getVar 0 acc = pure acc
 getVar n acc = do
     b <- getWord8
     getVar (n - 1) ((acc `shift` 8) .|. fromIntegral b)
+
+putDataSize :: Word64 -> Put
+putDataSize v
+    | v <= 126 = putVar 0 (v .|. 128)
+    | v <= 16382 = putVar 1 (v .|. 16384)
+    | v <= 2097150 = putVar 2 (v .|. 2097152)
+    | v <= 268435454 = putVar 3 (v .|. 268435456)
+    | v <= 34359738366 = putVar 4 (v .|. 34359738368)
+    | v <= 4398046511102 = putVar 5 (v .|. 4398046511104)
+    | v <= 562949953421310 = putVar 6 (v .|. 562949953421312)
+    | v <= 72057594037927936 = putVar 7 (v .|. 72057594037927936)
+    | otherwise = error "Invalid size"
+
+putVar :: Int -> Word64 -> Put
+putVar n acc = do
+    putWord8 $ fromIntegral (part .&. 0xff)
+    when (n > 0) $ putVar (n - 1) acc
+  where
+    part = acc `shift` ((-1) * 8 * n)

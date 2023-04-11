@@ -10,10 +10,11 @@ import Data.Foldable (forM_, traverse_)
 import Data.List (foldl')
 import Data.List.Split (chunksOf)
 import Data.Text qualified as Text
-import Data.Word (Word8)
+import Data.Word (Word64, Word8)
 import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 
 import Codec.EBML qualified as EBML
 
@@ -40,7 +41,14 @@ unitTests =
               , "0001 0000 0000 0000 0000 0000 0000 0010"
               ]
         , testCase "Incremental lookahead" (pure ())
+        , testProperty "Put <-> Get" propPutGet
         ]
+
+propPutGet :: Word64 -> Bool
+propPutGet value
+    | value > 72057594037927936 = True
+    | otherwise =
+        runGet EBML.getDataSize (runPut (EBML.putDataSize value)) == value
 
 testVarInts :: String -> BS.ByteString
 testVarInts str = BS.pack $ padStr <> " => " <> padVal

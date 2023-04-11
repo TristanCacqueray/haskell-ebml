@@ -57,6 +57,7 @@ module Codec.EBML (
     getElementHeader,
     getElementID,
     getDataSize,
+    putDataSize,
     getElement,
 ) where
 
